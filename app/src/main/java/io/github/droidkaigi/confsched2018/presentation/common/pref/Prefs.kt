@@ -18,4 +18,8 @@ object Prefs : KotprefModel() {
             context.bool(R.bool.pref_default_value_enable_hide_bottom_navigation),
             R.string.pref_key_enable_hide_bottom_navigation
     )
+    var enableReopenPreviousRoomSessions: Boolean by booleanPref(
+            context.bool(R.bool.pref_default_value_enable_reopen_previous_room_sessions),
+            R.string.pref_key_enable_reopen_previous_room_sessions
+    )
 }
