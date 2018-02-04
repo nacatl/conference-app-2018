@@ -3,8 +3,6 @@ package io.github.droidkaigi.confsched2018.presentation.sessions
 import android.arch.lifecycle.ViewModelProvider
 import android.arch.lifecycle.ViewModelProviders
 import android.os.Bundle
-import android.os.Parcel
-import android.os.Parcelable
 import android.support.transition.TransitionInflater
 import android.support.transition.TransitionManager
 import android.support.v4.app.Fragment
@@ -24,8 +22,7 @@ import io.github.droidkaigi.confsched2018.model.Room
 import io.github.droidkaigi.confsched2018.model.Session
 import io.github.droidkaigi.confsched2018.presentation.NavigationController
 import io.github.droidkaigi.confsched2018.presentation.Result
-import io.github.droidkaigi.confsched2018.presentation.common.pref.Prefs
-import io.github.droidkaigi.confsched2018.presentation.common.pref.initPreviousRoomPrefs
+import io.github.droidkaigi.confsched2018.presentation.common.view.SessionsLinearLayoutManager
 import io.github.droidkaigi.confsched2018.presentation.sessions.SessionsFragment.CurrentSessionScroller
 import io.github.droidkaigi.confsched2018.presentation.sessions.SessionsFragment.SaveClosedSessionScroller
 import io.github.droidkaigi.confsched2018.presentation.sessions.item.DateSessionsSection
@@ -133,19 +130,9 @@ class RoomSessionsFragment : Fragment(), Injectable,
     }
 
     override fun saveCurrentSession() {
-        val savedState = (binding.sessionsRecycler.layoutManager as LinearLayoutManager)
-                .onSaveInstanceState() as Parcelable
-        val parcel = Parcel.obtain()
-        savedState.writeToParcel(parcel, Parcelable.PARCELABLE_WRITE_RETURN_VALUE)
-        parcel.setDataPosition(0)
-
-        val anchorPosition = parcel.readInt()
-        val anchorOffset = parcel.readInt()
-
-        parcel.recycle()
-
-        Prefs.previousRoomScrollPosition = anchorPosition
-        Prefs.previousRoomScrollOffset = anchorOffset
+        val layoutManager = binding.sessionsRecycler.layoutManager
+                as SessionsLinearLayoutManager
+        layoutManager.saveScrollPositionToPrefs()
     }
 
     override fun restorePreviousSession() {
@@ -153,24 +140,9 @@ class RoomSessionsFragment : Fragment(), Injectable,
     }
 
     private fun scrollToPreviousSession() {
-        val linearLayoutManager = binding.sessionsRecycler.layoutManager as LinearLayoutManager
-        val previousScrollPosition = Prefs.previousRoomScrollPosition
-        val previousScrollOffset = Prefs.previousRoomScrollOffset
-
-        if (previousScrollPosition < 0) return
-
-        val parcel = Parcel.obtain()
-        parcel.writeInt(previousScrollPosition)
-        parcel.writeInt(previousScrollOffset)
-        parcel.writeInt(0)
-        parcel.setDataPosition(0)
-
-        val savedState = LinearLayoutManager.SavedState.CREATOR.createFromParcel(parcel)
-
-        linearLayoutManager.onRestoreInstanceState(savedState)
-        parcel.recycle()
-
-        initPreviousRoomPrefs()
+        val layoutManager = binding.sessionsRecycler.layoutManager
+                as SessionsLinearLayoutManager
+        layoutManager.restoreScrollPositionFromPrefs()
 
         sessionsViewModel.enableRestoreScroller = false
     }
@@ -185,6 +157,7 @@ class RoomSessionsFragment : Fragment(), Injectable,
         }
         binding.sessionsRecycler.apply {
             adapter = groupAdapter
+            layoutManager = SessionsLinearLayoutManager(context)
             (itemAnimator as SimpleItemAnimator).supportsChangeAnimations = false
 
             addOnScrollListener(
