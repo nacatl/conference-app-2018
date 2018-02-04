@@ -19,6 +19,8 @@ import io.github.droidkaigi.confsched2018.model.SessionSchedule
 import io.github.droidkaigi.confsched2018.presentation.NavigationController
 import io.github.droidkaigi.confsched2018.presentation.Result
 import io.github.droidkaigi.confsched2018.presentation.common.view.OnTabReselectedListener
+import io.github.droidkaigi.confsched2018.presentation.common.view.SessionsLinearLayoutManager
+import io.github.droidkaigi.confsched2018.presentation.sessions.SessionsFragment.SaveClosedSessionScroller
 import io.github.droidkaigi.confsched2018.presentation.sessions.item.ScheduleSessionsSection
 import io.github.droidkaigi.confsched2018.presentation.sessions.item.SpeechSessionItem
 import io.github.droidkaigi.confsched2018.util.ProgressTimeLatch
@@ -28,7 +30,11 @@ import io.github.droidkaigi.confsched2018.util.ext.setLinearDivider
 import timber.log.Timber
 import javax.inject.Inject
 
-class ScheduleSessionsFragment : Fragment(), Injectable, OnTabReselectedListener {
+class ScheduleSessionsFragment :
+        Fragment(),
+        Injectable,
+        OnTabReselectedListener,
+        SaveClosedSessionScroller {
 
     private lateinit var binding: FragmentScheduleSessionsBinding
 
@@ -78,6 +84,8 @@ class ScheduleSessionsFragment : Fragment(), Injectable, OnTabReselectedListener
                     val sessions = result.data
                     sessionsSection.updateSessions(sessions, onFavoriteClickListener,
                             onFeedbackListener)
+
+                    scheduleSessionsViewModel.onSuccessFetchSessions()
                 }
                 is Result.Failure -> {
                     Timber.e(result.e)
@@ -86,6 +94,10 @@ class ScheduleSessionsFragment : Fragment(), Injectable, OnTabReselectedListener
         })
         scheduleSessionsViewModel.isLoading.observe(this, { isLoading ->
             progressTimeLatch.loading = isLoading ?: false
+        })
+        scheduleSessionsViewModel.reopenPreviousSession.observe(this, {
+            if (it != true) return@observe
+            scrollToPreviousSession()
         })
     }
 
@@ -99,6 +111,7 @@ class ScheduleSessionsFragment : Fragment(), Injectable, OnTabReselectedListener
         }
         binding.sessionsRecycler.apply {
             adapter = groupAdapter
+            layoutManager = SessionsLinearLayoutManager(context)
             (itemAnimator as SimpleItemAnimator).supportsChangeAnimations = false
             setLinearDivider(R.drawable.shape_divider_vertical_12dp,
                     layoutManager as LinearLayoutManager)
@@ -107,6 +120,24 @@ class ScheduleSessionsFragment : Fragment(), Injectable, OnTabReselectedListener
 
     override fun onTabReselected() {
         binding.sessionsRecycler.smoothScrollToPosition(0)
+    }
+
+    override fun saveCurrentSession() {
+        val layoutManager = binding.sessionsRecycler.layoutManager
+                as SessionsLinearLayoutManager
+        layoutManager.saveScrollPositionToPrefs()
+    }
+
+    override fun restorePreviousSession() {
+        scheduleSessionsViewModel.enableRestoreScroller = true
+    }
+
+    private fun scrollToPreviousSession() {
+        val layoutManager = binding.sessionsRecycler.layoutManager
+                as SessionsLinearLayoutManager
+        layoutManager.restoreScrollPositionFromPrefs()
+
+        scheduleSessionsViewModel.enableRestoreScroller = false
     }
 
     companion object {

@@ -23,25 +23,31 @@ object Prefs : KotprefModel() {
             context.bool(R.bool.pref_default_value_enable_reopen_previous_room_sessions),
             R.string.pref_key_enable_reopen_previous_room_sessions
     )
-    var previousRoomId: Int by intPref(
-            context.integer(R.integer.pref_default_value_previous_room_id),
-            R.string.pref_key_previous_room_id
+    var previousSessionTabId: Int by intPref(
+            context.integer(R.integer.pref_default_value_previous_session_tab_id),
+            R.string.pref_key_previous_session_tab_id
     )
-    var previousRoomScrollPosition: Int by intPref(
-            context.integer(R.integer.pref_default_value_previous_room_scroll_position),
-            R.string.pref_key_previous_room_scroll_position
+    var previousSessionScrollPosition: Int by intPref(
+            context.integer(R.integer.pref_default_value_previous_session_scroll_position),
+            R.string.pref_key_previous_session_scroll_position
     )
-    var previousRoomScrollOffset: Int by intPref(
-            context.integer(R.integer.pref_default_value_previous_room_scroll_offset),
-            R.string.pref_key_previous_room_scroll_offset
+    var previousSessionScrollOffset: Int by intPref(
+            context.integer(R.integer.pref_default_value_previous_session_scroll_offset),
+            R.string.pref_key_previous_session_scroll_offset
+    )
+    var previousSessionTab: String by stringPref(
+            context.getString(R.string.pref_default_value_previous_session_tab),
+            R.string.pref_key_previous_session_tab
     )
 }
 
-fun initPreviousRoomPrefs() {
-    Prefs.previousRoomId = Prefs.context.integer(
-            R.integer.pref_default_value_previous_room_id)
-    Prefs.previousRoomScrollPosition = Prefs.context.integer(
-            R.integer.pref_default_value_previous_room_scroll_position)
-    Prefs.previousRoomScrollOffset = Prefs.context.integer(
-            R.integer.pref_default_value_previous_room_scroll_offset)
+fun initPreviousSessionPrefs() {
+    Prefs.previousSessionTab = Prefs.context.getString(
+            R.string.pref_default_value_previous_session_tab)
+    Prefs.previousSessionTabId = Prefs.context.integer(
+            R.integer.pref_default_value_previous_session_tab_id)
+    Prefs.previousSessionScrollPosition = Prefs.context.integer(
+            R.integer.pref_default_value_previous_session_scroll_position)
+    Prefs.previousSessionScrollOffset = Prefs.context.integer(
+            R.integer.pref_default_value_previous_session_scroll_offset)
 }

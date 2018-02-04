@@ -27,7 +27,7 @@ import io.github.droidkaigi.confsched2018.presentation.MainActivity.BottomNaviga
 import io.github.droidkaigi.confsched2018.presentation.Result
 import io.github.droidkaigi.confsched2018.presentation.common.fragment.Findable
 import io.github.droidkaigi.confsched2018.presentation.common.pref.Prefs
-import io.github.droidkaigi.confsched2018.presentation.common.pref.initPreviousRoomPrefs
+import io.github.droidkaigi.confsched2018.presentation.common.pref.initPreviousSessionPrefs
 import io.github.droidkaigi.confsched2018.presentation.common.view.OnTabReselectedDispatcher
 import io.github.droidkaigi.confsched2018.util.ProgressTimeLatch
 import io.github.droidkaigi.confsched2018.util.ext.observe
@@ -108,6 +108,13 @@ class SessionsFragment : Fragment(), Injectable, Findable, OnReselectedListener 
                 .of(this, viewModelFactory)
                 .get(SessionsViewModel::class.java)
 
+        if (Prefs.enableReopenPreviousRoomSessions and (savedInstanceState == null)) {
+            when (Prefs.previousSessionTab) {
+                SessionTabMode.SCHEDULE.name -> sessionsViewModel.changeTabMode(SessionTabMode.SCHEDULE)
+                else -> sessionsViewModel.changeTabMode(SessionTabMode.ROOM)
+            }
+        }
+
         val progressTimeLatch = ProgressTimeLatch {
             binding.progress.visibility = if (it) View.VISIBLE else View.GONE
         }
@@ -153,14 +160,15 @@ class SessionsFragment : Fragment(), Injectable, Findable, OnReselectedListener 
     override fun onPause() {
         super.onPause()
         when (Prefs.enableReopenPreviousRoomSessions) {
-            true -> saveCurrentPosition()
-            false -> initPreviousRoomPrefs()
+            true -> saveCurrentSession()
+            false -> initPreviousSessionPrefs()
         }
     }
 
-    private fun saveCurrentPosition() {
+    private fun saveCurrentSession() {
         val currentItem = binding.sessionsViewPager.currentItem
-        Prefs.previousRoomId = currentItem
+        Prefs.previousSessionTabId = currentItem
+        Prefs.previousSessionTab = sessionsViewModel.tabMode.name
         val fragment = sessionsViewPagerAdapter
                 .instantiateItem(binding.sessionsViewPager, currentItem)
         if (fragment is SaveClosedSessionScroller) {
@@ -187,7 +195,7 @@ class SessionsFragment : Fragment(), Injectable, Findable, OnReselectedListener 
     }
 
     private fun reopenPreviousOpenedItem() {
-        val previousItem = Prefs.previousRoomId
+        val previousItem = Prefs.previousSessionTabId
         if (previousItem < 0) return
 
         binding.sessionsViewPager.currentItem = previousItem

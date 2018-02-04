@@ -5,7 +5,7 @@ import android.os.Parcel
 import android.os.Parcelable
 import android.support.v7.widget.LinearLayoutManager
 import io.github.droidkaigi.confsched2018.presentation.common.pref.Prefs
-import io.github.droidkaigi.confsched2018.presentation.common.pref.initPreviousRoomPrefs
+import io.github.droidkaigi.confsched2018.presentation.common.pref.initPreviousSessionPrefs
 
 
 class SessionsLinearLayoutManager(context: Context?) : LinearLayoutManager(context) {
@@ -21,13 +21,13 @@ class SessionsLinearLayoutManager(context: Context?) : LinearLayoutManager(conte
 
         parcel.recycle()
 
-        Prefs.previousRoomScrollPosition = anchorPosition
-        Prefs.previousRoomScrollOffset = anchorOffset
+        Prefs.previousSessionScrollPosition = anchorPosition
+        Prefs.previousSessionScrollOffset = anchorOffset
     }
 
     fun restoreScrollPositionFromPrefs(){
-        val previousScrollPosition = Prefs.previousRoomScrollPosition
-        val previousScrollOffset = Prefs.previousRoomScrollOffset
+        val previousScrollPosition = Prefs.previousSessionScrollPosition
+        val previousScrollOffset = Prefs.previousSessionScrollOffset
 
         if (previousScrollPosition < 0) return
 
@@ -42,7 +42,7 @@ class SessionsLinearLayoutManager(context: Context?) : LinearLayoutManager(conte
         onRestoreInstanceState(savedState)
         parcel.recycle()
 
-        initPreviousRoomPrefs()
+        initPreviousSessionPrefs()
     }
 
 }
