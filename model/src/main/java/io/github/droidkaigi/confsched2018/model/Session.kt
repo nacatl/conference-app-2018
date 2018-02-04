@@ -21,7 +21,9 @@ sealed class Session(
             val topic: Topic,
             val level: Level,
             val isFavorited: Boolean,
-            val speakers: List<Speaker>
+            val speakers: List<Speaker>,
+            val feedback: SessionFeedback,
+            val message: SessionMessage?
     ) : Session(id, dayNumber, startTime, endTime)
 
     data class SpecialSession(
@@ -35,4 +37,7 @@ sealed class Session(
 
     val isFinished: Boolean
         get() = System.currentTimeMillis() > endTime.time
+
+    val isOnGoing: Boolean
+        get() = System.currentTimeMillis() in startTime.time..endTime.time
 }

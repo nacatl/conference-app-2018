@@ -4,26 +4,27 @@ import android.arch.lifecycle.ViewModelProvider
 import android.arch.lifecycle.ViewModelProviders
 import android.os.Bundle
 import android.support.v4.app.Fragment
+import android.support.v4.util.Pair
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import com.google.firebase.analytics.FirebaseAnalytics
 import com.xwray.groupie.GroupAdapter
 import com.xwray.groupie.ViewHolder
+import io.github.droidkaigi.confsched2018.R
 import io.github.droidkaigi.confsched2018.databinding.FragmentSearchSpeakersBinding
 import io.github.droidkaigi.confsched2018.di.Injectable
 import io.github.droidkaigi.confsched2018.presentation.NavigationController
 import io.github.droidkaigi.confsched2018.presentation.Result
 import io.github.droidkaigi.confsched2018.presentation.common.itemdecoration.StickyHeaderItemDecoration
+import io.github.droidkaigi.confsched2018.presentation.common.view.OnTabReselectedListener
 import io.github.droidkaigi.confsched2018.presentation.search.item.SpeakerItem
 import io.github.droidkaigi.confsched2018.presentation.search.item.SpeakersSection
 import io.github.droidkaigi.confsched2018.util.ext.observe
 import timber.log.Timber
 import javax.inject.Inject
 
-class SearchSpeakersFragment : Fragment(), Injectable {
+class SearchSpeakersFragment : Fragment(), Injectable, OnTabReselectedListener {
 
-    private var fireBaseAnalytics: FirebaseAnalytics? = null
     private lateinit var binding: FragmentSearchSpeakersBinding
     @Inject lateinit var viewModelFactory: ViewModelProvider.Factory
 
@@ -60,23 +61,16 @@ class SearchSpeakersFragment : Fragment(), Injectable {
         })
     }
 
-    override fun onActivityCreated(savedInstanceState: Bundle?) {
-        super.onActivityCreated(savedInstanceState)
-        fireBaseAnalytics = FirebaseAnalytics.getInstance(context)
-    }
-
-    override fun setUserVisibleHint(isVisibleToUser: Boolean) {
-        super.setUserVisibleHint(isVisibleToUser)
-        if (isVisibleToUser) {
-            fireBaseAnalytics?.setCurrentScreen(activity!!, null, this::class.java.simpleName)
-        }
-    }
-
     private fun setupRecyclerView() {
         val groupAdapter = GroupAdapter<ViewHolder>().apply {
-            setOnItemClickListener { item, _ ->
-                val speakerItem = item as? SpeakerItem ?: return@setOnItemClickListener
-                navigationController.navigateToSpeakerDetailActivity(speakerItem.speaker.id)
+            setOnItemClickListener { item, v ->
+                val speakerId = (item as? SpeakerItem)?.speaker?.id ?: return@setOnItemClickListener
+                val sharedElement = Pair(
+                        v.findViewById<View>(R.id.speaker_image),
+                        speakerId)
+                navigationController.navigateToSpeakerDetailActivity(
+                        speakerId = speakerId,
+                        sharedElement = sharedElement)
             }
             add(speakersSection)
         }
@@ -96,6 +90,10 @@ class SearchSpeakersFragment : Fragment(), Injectable {
                         return speakersSection.getGroupId(position)?.toString()
                     }
                 }))
+    }
+
+    override fun onTabReselected() {
+        binding.searchSessionRecycler.smoothScrollToPosition(0)
     }
 
     companion object {

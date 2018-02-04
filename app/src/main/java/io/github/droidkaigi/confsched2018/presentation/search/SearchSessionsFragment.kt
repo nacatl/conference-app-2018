@@ -7,7 +7,6 @@ import android.support.v4.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import com.google.firebase.analytics.FirebaseAnalytics
 import com.xwray.groupie.GroupAdapter
 import com.xwray.groupie.ViewHolder
 import io.github.droidkaigi.confsched2018.databinding.FragmentSearchSessionsBinding
@@ -15,6 +14,7 @@ import io.github.droidkaigi.confsched2018.di.Injectable
 import io.github.droidkaigi.confsched2018.model.Session
 import io.github.droidkaigi.confsched2018.presentation.NavigationController
 import io.github.droidkaigi.confsched2018.presentation.Result
+import io.github.droidkaigi.confsched2018.presentation.common.view.OnTabReselectedListener
 import io.github.droidkaigi.confsched2018.presentation.search.item.HorizontalSessionItem
 import io.github.droidkaigi.confsched2018.presentation.search.item.LevelSessionsSection
 import io.github.droidkaigi.confsched2018.util.SessionAlarm
@@ -22,9 +22,8 @@ import io.github.droidkaigi.confsched2018.util.ext.observe
 import timber.log.Timber
 import javax.inject.Inject
 
-class SearchSessionsFragment : Fragment(), Injectable {
+class SearchSessionsFragment : Fragment(), Injectable, OnTabReselectedListener {
 
-    private var fireBaseAnalytics: FirebaseAnalytics? = null
     private lateinit var binding: FragmentSearchSessionsBinding
     @Inject lateinit var viewModelFactory: ViewModelProvider.Factory
 
@@ -68,18 +67,6 @@ class SearchSessionsFragment : Fragment(), Injectable {
         })
     }
 
-    override fun onActivityCreated(savedInstanceState: Bundle?) {
-        super.onActivityCreated(savedInstanceState)
-        fireBaseAnalytics = FirebaseAnalytics.getInstance(context)
-    }
-
-    override fun setUserVisibleHint(isVisibleToUser: Boolean) {
-        super.setUserVisibleHint(isVisibleToUser)
-        if (isVisibleToUser) {
-            fireBaseAnalytics?.setCurrentScreen(activity!!, null, this::class.java.simpleName)
-        }
-    }
-
     private fun setupRecyclerView() {
         val groupAdapter = GroupAdapter<ViewHolder>().apply {
             add(sessionsSection)
@@ -91,6 +78,10 @@ class SearchSessionsFragment : Fragment(), Injectable {
         binding.searchSessionRecycler.apply {
             adapter = groupAdapter
         }
+    }
+
+    override fun onTabReselected() {
+        binding.searchSessionRecycler.smoothScrollToPosition(0)
     }
 
     companion object {

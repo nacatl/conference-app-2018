@@ -1,12 +1,15 @@
 package io.github.droidkaigi.confsched2018.presentation
 
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.support.customtabs.CustomTabsIntent
 import android.support.v4.app.Fragment
 import android.support.v4.app.FragmentManager
 import android.support.v4.content.ContextCompat
+import android.support.v4.util.Pair
 import android.support.v7.app.AppCompatActivity
+import android.view.View
 import io.github.droidkaigi.confsched2018.R
 import io.github.droidkaigi.confsched2018.model.Session
 import io.github.droidkaigi.confsched2018.presentation.about.AboutThisAppActivity
@@ -22,6 +25,8 @@ import io.github.droidkaigi.confsched2018.presentation.map.MapActivity
 import io.github.droidkaigi.confsched2018.presentation.map.MapFragment
 import io.github.droidkaigi.confsched2018.presentation.search.SearchFragment
 import io.github.droidkaigi.confsched2018.presentation.sessions.SessionsFragment
+import io.github.droidkaigi.confsched2018.presentation.sessions.feedback.SessionsFeedbackActivity
+import io.github.droidkaigi.confsched2018.presentation.sessions.feedback.SessionsFeedbackFragment
 import io.github.droidkaigi.confsched2018.presentation.settings.SettingsActivity
 import io.github.droidkaigi.confsched2018.presentation.settings.SettingsFragment
 import io.github.droidkaigi.confsched2018.presentation.speaker.SpeakerDetailActivity
@@ -59,6 +64,10 @@ class NavigationController @Inject constructor(private val activity: AppCompatAc
         replaceFragment(SessionDetailFragment.newInstance(sessionId))
     }
 
+    fun navigateToFeedback() {
+        replaceFragment(SessionsFeedbackFragment.newInstance())
+    }
+
     fun navigateToMap() {
         replaceFragment(MapFragment.newInstance())
     }
@@ -75,8 +84,8 @@ class NavigationController @Inject constructor(private val activity: AppCompatAc
         replaceFragment(AboutThisAppFragment.newInstance())
     }
 
-    fun navigateToSpeakerDetail(speakerId: String) {
-        replaceFragment(SpeakerDetailFragment.newInstance(speakerId))
+    fun navigateToSpeakerDetail(speakerId: String, transitionName: String?) {
+        replaceFragment(SpeakerDetailFragment.newInstance(speakerId, transitionName))
     }
 
     fun navigateToTopicDetail(topicId: Int) {
@@ -114,6 +123,10 @@ class NavigationController @Inject constructor(private val activity: AppCompatAc
         SessionDetailActivity.start(activity, session)
     }
 
+    fun navigateToSessionsFeedbackActivity(session: Session.SpeechSession) {
+        SessionsFeedbackActivity.start(activity, session)
+    }
+
     fun navigateToMapActivity() {
         MapActivity.start(activity)
     }
@@ -134,29 +147,68 @@ class NavigationController @Inject constructor(private val activity: AppCompatAc
         SpeakerDetailActivity.start(activity, speakerId)
     }
 
+    fun navigateToSpeakerDetailActivity(speakerId: String, sharedElement: Pair<View, String>) {
+        SpeakerDetailActivity.start(activity, sharedElement, speakerId)
+    }
+
     fun navigateToTopicDetailActivity(topicId: Int) {
         TopicDetailActivity.start(activity, topicId)
     }
 
     fun navigateToExternalBrowser(url: String) {
+        val customTabsPackageName = CustomTabsHelper.getPackageNameToUse(activity)
+        if (tryLaunchingSpecificApp(url, customTabsPackageName)) {
+            return
+        }
+
         val customTabsIntent = CustomTabsIntent.Builder()
                 .setShowTitle(true)
                 .setToolbarColor(ContextCompat.getColor(activity, R.color.primary))
                 .build()
                 .apply {
-                    val appUri = Uri.parse("android-app://${activity.packageName}")
-                    intent.putExtra(Intent.EXTRA_REFERRER, appUri)
+                    val referrer = Uri.parse("android-app://${activity.packageName}")
+                    intent.putExtra(Intent.EXTRA_REFERRER, referrer)
                 }
-
-        val packageName = CustomTabsHelper.getPackageNameToUse(activity)
-        packageName ?: run {
-            // Cannot use custom tabs.
-            activity.startActivity(customTabsIntent.intent.setData(Uri.parse(url)))
+        val webUri = Uri.parse(url)
+        if (tryUsingCustomTabs(customTabsPackageName, customTabsIntent, webUri)) {
             return
         }
 
-        customTabsIntent.intent.`package` = packageName
-        customTabsIntent.launchUrl(activity, Uri.parse(url))
+        // Cannot use custom tabs.
+        activity.startActivity(customTabsIntent.intent.setData(webUri))
+    }
+
+    private fun tryLaunchingSpecificApp(url: String, customTabsPackageName: String?): Boolean {
+        val appUri = Uri.parse(url).let {
+            if (it.host.contains("facebook")) {
+                Uri.parse(FACEBOOK_SCHEME + url)
+            } else it
+        }
+        val appIntent = Intent(Intent.ACTION_VIEW, appUri)
+        val intentResolveInfo = activity.packageManager.resolveActivity(
+                appIntent,
+                PackageManager.MATCH_DEFAULT_ONLY
+        )
+
+        intentResolveInfo?.activityInfo?.packageName?.let {
+            if (customTabsPackageName != null && it != customTabsPackageName) {
+                // Open specific app
+                activity.startActivity(appIntent)
+                return true
+            }
+        }
+        return false
+    }
+
+    private fun tryUsingCustomTabs(customTabsPackageName: String?,
+                                   customTabsIntent: CustomTabsIntent,
+                                   webUri: Uri?): Boolean {
+        customTabsPackageName?.let {
+            customTabsIntent.intent.`package` = customTabsPackageName
+            customTabsIntent.launchUrl(activity, webUri)
+            return true
+        }
+        return false
     }
 
     fun navigateImplicitly(url: String?) {
@@ -166,5 +218,9 @@ class NavigationController @Inject constructor(private val activity: AppCompatAc
                 activity.startActivity(intent)
             }
         }
+    }
+
+    companion object {
+        private const val FACEBOOK_SCHEME = "fb://facewebmodal/f?href="
     }
 }
