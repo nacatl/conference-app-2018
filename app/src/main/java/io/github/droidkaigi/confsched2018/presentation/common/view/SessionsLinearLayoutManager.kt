@@ -7,7 +7,6 @@ import android.support.v7.widget.LinearLayoutManager
 import io.github.droidkaigi.confsched2018.presentation.common.pref.Prefs
 import io.github.droidkaigi.confsched2018.presentation.common.pref.initPreviousSessionPrefs
 
-
 class SessionsLinearLayoutManager(context: Context?) : LinearLayoutManager(context) {
 
     fun saveScrollPositionToPrefs() {
@@ -25,7 +24,7 @@ class SessionsLinearLayoutManager(context: Context?) : LinearLayoutManager(conte
         Prefs.previousSessionScrollOffset = anchorOffset
     }
 
-    fun restoreScrollPositionFromPrefs(){
+    fun restoreScrollPositionFromPrefs() {
         val previousScrollPosition = Prefs.previousSessionScrollPosition
         val previousScrollOffset = Prefs.previousSessionScrollOffset
 
@@ -44,5 +43,4 @@ class SessionsLinearLayoutManager(context: Context?) : LinearLayoutManager(conte
 
         initPreviousSessionPrefs()
     }
-
 }

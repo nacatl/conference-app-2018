@@ -112,8 +112,10 @@ class SessionsFragment : Fragment(), Injectable, Findable, OnReselectedListener 
 
         if (Prefs.enableReopenPreviousRoomSessions and (savedInstanceState == null)) {
             when (Prefs.previousSessionTab) {
-                SessionTabMode.SCHEDULE.name -> sessionsViewModel.changeTabMode(SessionTabMode.SCHEDULE)
-                else -> sessionsViewModel.changeTabMode(SessionTabMode.ROOM)
+                SessionTabMode.SCHEDULE.name ->
+                    sessionsViewModel.changeTabMode(SessionTabMode.SCHEDULE)
+                else ->
+                    sessionsViewModel.changeTabMode(SessionTabMode.ROOM)
             }
         }
 
