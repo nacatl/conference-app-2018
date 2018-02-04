@@ -3,6 +3,8 @@ package io.github.droidkaigi.confsched2018.presentation.sessions
 import android.arch.lifecycle.ViewModelProvider
 import android.arch.lifecycle.ViewModelProviders
 import android.os.Bundle
+import android.os.Parcel
+import android.os.Parcelable
 import android.support.transition.TransitionInflater
 import android.support.transition.TransitionManager
 import android.support.v4.app.Fragment
@@ -22,9 +24,12 @@ import io.github.droidkaigi.confsched2018.model.Room
 import io.github.droidkaigi.confsched2018.model.Session
 import io.github.droidkaigi.confsched2018.presentation.NavigationController
 import io.github.droidkaigi.confsched2018.presentation.Result
+import io.github.droidkaigi.confsched2018.presentation.common.pref.Prefs
+import io.github.droidkaigi.confsched2018.presentation.common.pref.initPreviousRoomPrefs
+import io.github.droidkaigi.confsched2018.presentation.sessions.SessionsFragment.CurrentSessionScroller
+import io.github.droidkaigi.confsched2018.presentation.sessions.SessionsFragment.SaveClosedSessionScroller
 import io.github.droidkaigi.confsched2018.presentation.sessions.item.DateSessionsSection
 import io.github.droidkaigi.confsched2018.presentation.sessions.item.SpeechSessionItem
-import io.github.droidkaigi.confsched2018.presentation.sessions.SessionsFragment.CurrentSessionScroller
 import io.github.droidkaigi.confsched2018.util.ProgressTimeLatch
 import io.github.droidkaigi.confsched2018.util.SessionAlarm
 import io.github.droidkaigi.confsched2018.util.ext.addOnScrollListener
@@ -39,7 +44,8 @@ import timber.log.Timber
 import java.util.Date
 import javax.inject.Inject
 
-class RoomSessionsFragment : Fragment(), Injectable, CurrentSessionScroller {
+class RoomSessionsFragment : Fragment(), Injectable,
+        CurrentSessionScroller, SaveClosedSessionScroller {
 
     private var fireBaseAnalytics: FirebaseAnalytics? = null
     private lateinit var binding: FragmentRoomSessionsBinding
@@ -100,6 +106,10 @@ class RoomSessionsFragment : Fragment(), Injectable, CurrentSessionScroller {
             if (it != true) return@observe
             scrollToCurrentSession()
         })
+        sessionsViewModel.reopenPreviousSession.observe(this, {
+            if (it != true) return@observe
+            scrollToPreviousSession()
+        })
     }
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
@@ -120,6 +130,49 @@ class RoomSessionsFragment : Fragment(), Injectable, CurrentSessionScroller {
                 .toInstant().toEpochMilli())
         val currentSessionPosition = sessionsSection.getDateHeaderPositionByDate(now)
         binding.sessionsRecycler.scrollToPosition(currentSessionPosition)
+    }
+
+    override fun saveCurrentSession() {
+        val savedState = (binding.sessionsRecycler.layoutManager as LinearLayoutManager)
+                .onSaveInstanceState() as Parcelable
+        val parcel = Parcel.obtain()
+        savedState.writeToParcel(parcel, Parcelable.PARCELABLE_WRITE_RETURN_VALUE)
+        parcel.setDataPosition(0)
+
+        val anchorPosition = parcel.readInt()
+        val anchorOffset = parcel.readInt()
+
+        parcel.recycle()
+
+        Prefs.previousRoomScrollPosition = anchorPosition
+        Prefs.previousRoomScrollOffset = anchorOffset
+    }
+
+    override fun restorePreviousSession() {
+        sessionsViewModel.enableRestoreScroller = true
+    }
+
+    private fun scrollToPreviousSession() {
+        val linearLayoutManager = binding.sessionsRecycler.layoutManager as LinearLayoutManager
+        val previousScrollPosition = Prefs.previousRoomScrollPosition
+        val previousScrollOffset = Prefs.previousRoomScrollOffset
+
+        if (previousScrollPosition < 0) return
+
+        val parcel = Parcel.obtain()
+        parcel.writeInt(previousScrollPosition)
+        parcel.writeInt(previousScrollOffset)
+        parcel.writeInt(0)
+        parcel.setDataPosition(0)
+
+        val savedState = LinearLayoutManager.SavedState.CREATOR.createFromParcel(parcel)
+
+        linearLayoutManager.onRestoreInstanceState(savedState)
+        parcel.recycle()
+
+        initPreviousRoomPrefs()
+
+        sessionsViewModel.enableRestoreScroller = false
     }
 
     private fun setupRecyclerView() {

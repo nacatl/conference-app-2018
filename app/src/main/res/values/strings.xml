@@ -8,6 +8,9 @@
     <string name="pref_key_enable_notification" translatable="false">pref_key_enable_notification</string>
     <string name="pref_key_enable_hide_bottom_navigation" translatable="false">pref_key_enable_hide_bottom_navigation</string>
     <string name="pref_key_enable_reopen_previous_room_sessions" translatable="false">pref_key_enable_reopen_previous_room_sessions</string>
+    <string name="pref_key_previous_room_id" translatable="false">pref_key_previous_room_id</string>
+    <string name="pref_key_previous_room_scroll_position" translatable="false">pref_key_previous_session_scroll_position</string>
+    <string name="pref_key_previous_room_scroll_offset" translatable="false">pref_key_previous_session_scroll_offset</string>
 
     <!-- NavigationDrawer -->
     <string name="nav_item_home">Home</string>
