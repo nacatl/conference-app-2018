@@ -96,8 +96,8 @@
         BottomNavigationBar by scrolling or not.</string>
     <string name="settings_enable_reopen_previous_room_sessions_title_preference">Reopen
         previous room sessions</string>
-    <string name="settings_enable_reopen_previous_room_sessions_summary_preference">When you launch
-        the app, the previous room-tab and the sessions were shown will be opened.</string>
+    <string name="settings_enable_reopen_previous_room_sessions_summary_preference">Save the
+        room-tab and the sessions when closed.</string>
 
     <!-- Speaker -->
     <string name="speaker_title_activity_detail">Speaker</string>
